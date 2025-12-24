@@ -1,6 +1,6 @@
 module Api
   module V1
-    class SessionsController < ApplicationController
+    class SessionsController < BaseController
       # POST /api/v1/login
       def create
         seller = Seller.find_by(email: params[:email]&.downcase)

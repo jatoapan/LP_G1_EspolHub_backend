@@ -1,6 +1,6 @@
 module Api
   module V1
-    class SellersController < ApplicationController
+    class SellersController < BaseController
       before_action :authenticate_seller!, only: [:update, :destroy, :me]
       before_action :set_seller, only: [:show]
 
