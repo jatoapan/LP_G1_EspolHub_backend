@@ -1,13 +1,14 @@
 class CategorySerializer
   include JSONAPI::Serializer
 
-  attributes :id, :name, :slug, :description, :icon, :position
+  attributes :id, :name, :description, :icon, :active
 
-  attribute :announcements_count do |object|
-    if object.respond_to?(:announcements_count)
-      object.announcements_count
+  attribute :announcements_count do |category|
+    # Use counter if available from scope, otherwise query
+    if category.respond_to?(:active_announcements_count) && category.active_announcements_count.present?
+      category.active_announcements_count
     else
-      object.announcements.active_listings.count
+      category.active_announcements_count
     end
   end
 end

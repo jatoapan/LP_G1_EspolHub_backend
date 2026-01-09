@@ -11,15 +11,41 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      # Autenticación
+      # === Authentication ===
       post "login", to: "sessions#create"
+      delete "logout", to: "sessions#destroy"
 
-      # Perfil del vendedor actual
+      # === Categories ===
+      resources :categories, only: [:index, :show] do
+        # GET /api/v1/categories/:category_id/announcements
+        resources :announcements, only: [:index]
+      end
+
+      # === Announcements ===
+      resources :announcements, only: [:index, :show, :create, :update, :destroy] do
+        member do
+          patch :increment_views
+          patch :reserve
+          patch :mark_as_sold
+        end
+
+        collection do
+          get :search
+          get :popular
+          get :recent
+        end
+      end
+
+      # === Sellers ===
+      # Current seller endpoints
       get "sellers/me", to: "sellers#me"
       patch "sellers/me", to: "sellers#update"
       delete "sellers/me", to: "sellers#destroy"
 
-      resources :sellers, only: [:create, :show]
+      resources :sellers, only: [:create, :show] do
+        # GET /api/v1/sellers/:seller_id/announcements
+        resources :announcements, only: [:index], action: :announcements
+      end
     end
   end
 

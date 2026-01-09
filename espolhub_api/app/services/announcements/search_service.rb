@@ -12,13 +12,10 @@ module Announcements
       announcements = apply_filters(announcements)
       announcements = apply_search(announcements)
       announcements = apply_sorting(announcements)
-      
-      paginated = paginate(announcements)
-      
-      Result.success(
-        announcements: paginated,
-        meta: pagination_meta(announcements)
-      )
+
+      paginated_result = paginate(announcements)
+
+      Result.success(paginated_result)
     end
 
     private
@@ -54,22 +51,24 @@ module Announcements
 
     def paginate(query)
       page = [@params[:page].to_i, 1].max
-      per_page = [[@params[:per_page].to_i, 1].max, 50].min
-      per_page = DEFAULT_PER_PAGE if per_page.zero?
-      
-      query.paginate(page: page, per_page: per_page)
-    end
+      per_page_param = @params[:per_page].to_i
+      per_page = if per_page_param.positive?
+                   [per_page_param, 50].min
+                 else
+                   DEFAULT_PER_PAGE
+                 end
 
-    def pagination_meta(query)
-      page = [@params[:page].to_i, 1].max
-      per_page = [[@params[:per_page].to_i, DEFAULT_PER_PAGE].max, 50].min
-      total = query.count
-      
+      # Use Kaminari pagination
+      collection = query.page(page).per(per_page)
+
       {
-        current_page: page,
-        per_page: per_page,
-        total_count: total,
-        total_pages: (total.to_f / per_page).ceil
+        announcements: collection,
+        meta: {
+          current_page: collection.current_page,
+          per_page: per_page,
+          total_count: collection.total_count,
+          total_pages: collection.total_pages
+        }
       }
     end
   end

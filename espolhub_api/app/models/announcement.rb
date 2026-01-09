@@ -1,11 +1,11 @@
 # app/models/announcement.rb
 class Announcement < ApplicationRecord
-  # Enums
-  enum :condition, { new: "new", like_new: "like_new", good: "good", fair: "fair" }, prefix: true
-  enum :status, { active: "active", sold: "sold", reserved: "reserved", inactive: "inactive" }, prefix: true
+  # Enums - Using integer values for database storage
+  enum status: { active: 0, sold: 1, reserved: 2, inactive: 3 }, _default: :active
+  enum condition: { new_item: 0, like_new: 1, good: 2, acceptable: 3 }, _prefix: :condition
 
   # Associations
-  belongs_to :seller
+  belongs_to :seller, counter_cache: true
   belongs_to :category
   has_many_attached :images
 

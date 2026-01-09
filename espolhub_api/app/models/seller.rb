@@ -5,7 +5,7 @@ class Seller < ApplicationRecord
   VALID_FACULTIES = %w[FIEC FCNM FIMCP FIMCBOR FCSH FADCOM ESPAE FCV FICT].freeze
 
   # Associations
-  #has_many :announcements, dependent: :destroy
+  has_many :announcements, dependent: :destroy
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -25,7 +25,13 @@ class Seller < ApplicationRecord
 
   # Scopes
   scope :by_faculty, ->(faculty) { where(faculty: faculty) }
-  #scope :active, -> { joins(:announcements).where(announcements: { status: :active }).distinct }
+  scope :with_active_announcements, -> {
+    joins(:announcements)
+      .where(announcements: { status: 0 }) # 0 = active
+      .distinct
+  }
+  scope :with_announcements, -> { includes(:announcements) }
+  scope :by_announcements_count, -> { order(announcements_count: :desc) }
 
   private
 
