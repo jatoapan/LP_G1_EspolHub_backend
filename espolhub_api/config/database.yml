@@ -127,3 +127,4 @@ production:
   <<: *default
   database: <%= ENV.fetch("DB_NAME_PRODUCTION", "espolhub_production") %>
   url: <%= ENV["DATABASE_URL"] %>
+  adapter: postgresql
