@@ -6,6 +6,7 @@ class Seller < ApplicationRecord
 
   # Associations
   has_many :announcements, dependent: :destroy
+  has_many :refresh_tokens, dependent: :destroy
 
   # Validations
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
@@ -17,7 +18,12 @@ class Seller < ApplicationRecord
                     format: { with: /\A09\d{8}\z/, message: "debe ser un número ecuatoriano válido" }
   validates :faculty, presence: true,
                       inclusion: { in: VALID_FACULTIES, message: "no es una facultad válida" }
-  validates :password, length: { minimum: 6 }, if: -> { new_record? || password.present? }
+  validates :password, length: { minimum: 8 },
+                       format: {
+                         with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                         message: "debe contener al menos una mayúscula, una minúscula y un número"
+                       },
+                       if: -> { new_record? || password.present? }
 
   # Callbacks
   before_save :normalize_email

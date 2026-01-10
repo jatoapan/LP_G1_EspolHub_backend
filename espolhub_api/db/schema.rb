@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_01_09_224835) do
+ActiveRecord::Schema[7.1].define(version: 2026_01_09_234209) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -74,6 +74,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_09_224835) do
     t.index ["name"], name: "index_categories_on_name", unique: true
   end
 
+  create_table "refresh_tokens", force: :cascade do |t|
+    t.bigint "seller_id", null: false
+    t.string "token_digest", null: false
+    t.string "jti", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_refresh_tokens_on_expires_at"
+    t.index ["jti"], name: "index_refresh_tokens_on_jti", unique: true
+    t.index ["seller_id", "revoked_at"], name: "index_refresh_tokens_on_seller_id_and_revoked_at"
+    t.index ["seller_id"], name: "index_refresh_tokens_on_seller_id"
+  end
+
   create_table "sellers", force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -92,4 +106,5 @@ ActiveRecord::Schema[7.1].define(version: 2026_01_09_224835) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "announcements", "categories", on_delete: :restrict
   add_foreign_key "announcements", "sellers", on_delete: :cascade
+  add_foreign_key "refresh_tokens", "sellers", on_delete: :cascade
 end

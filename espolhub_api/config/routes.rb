@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       # === Authentication ===
       post "login", to: "sessions#create"
+      post "refresh", to: "sessions#refresh"
       delete "logout", to: "sessions#destroy"
 
       # === Categories ===

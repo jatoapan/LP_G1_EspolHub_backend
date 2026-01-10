@@ -3,9 +3,11 @@ module Api
     class SellersController < BaseController
       before_action :authenticate_seller!, only: [:update, :destroy, :me]
       before_action :set_seller, only: [:show]
+      after_action :verify_authorized, except: [:create, :show, :announcements]
 
       # POST /api/v1/sellers (Registro)
       def create
+        authorize Seller
         result = Sellers::CreateService.call(params: seller_params)
 
         result.on_success do |seller|
@@ -20,6 +22,7 @@ module Api
 
       # GET /api/v1/sellers/:id
       def show
+        authorize @seller
         render_success(
           SellerSerializer.new(@seller, params: { public: true }).serializable_hash[:data]
         )
@@ -27,6 +30,7 @@ module Api
 
       # GET /api/v1/sellers/me (Perfil propio)
       def me
+        authorize current_seller
         render_success(
           SellerSerializer.new(current_seller).serializable_hash[:data]
         )
@@ -34,6 +38,7 @@ module Api
 
       # PATCH/PUT /api/v1/sellers/me
       def update
+        authorize current_seller
         result = Sellers::UpdateService.call(
           seller: current_seller,
           params: seller_params
@@ -48,6 +53,7 @@ module Api
 
       # DELETE /api/v1/sellers/me
       def destroy
+        authorize current_seller
         if current_seller.destroy
           head :no_content
         else

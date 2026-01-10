@@ -3,9 +3,11 @@ module Api
     class AnnouncementsController < BaseController
       before_action :authenticate_seller!, only: [:create, :update, :destroy]
       before_action :set_announcement, only: [:show, :update, :destroy]
+      after_action :verify_authorized, except: [:index, :show]
 
       # GET /api/v1/announcements
       def index
+        authorize Announcement
         result = Announcements::SearchService.call(params: search_params)
 
         if result.success?
@@ -23,8 +25,9 @@ module Api
 
       # GET /api/v1/announcements/:id
       def show
+        authorize @announcement
         @announcement.increment_views!
-        
+
         render_success(
           AnnouncementSerializer.new(@announcement, include: [:seller, :category]).serializable_hash[:data]
         )
@@ -32,6 +35,7 @@ module Api
 
       # POST /api/v1/announcements
       def create
+        authorize Announcement
         result = Announcements::CreateService.call(
           seller: current_seller,
           params: announcement_params,
@@ -50,7 +54,7 @@ module Api
 
       # PATCH/PUT /api/v1/announcements/:id
       def update
-        authorize_owner!
+        authorize @announcement
 
         result = Announcements::UpdateService.call(
           announcement: @announcement,
@@ -67,6 +71,8 @@ module Api
 
       # DELETE /api/v1/announcements/:id
       def destroy
+        authorize @announcement
+
         result = Announcements::DeleteService.call(
           announcement: @announcement,
           seller: current_seller
@@ -84,12 +90,6 @@ module Api
       def set_announcement
         @announcement = Announcement.includes(:seller, :category, images_attachments: :blob)
                                     .find(params[:id])
-      end
-
-      def authorize_owner!
-        unless @announcement.seller_id == current_seller&.id
-          render_error("No autorizado para modificar este anuncio", status: :forbidden)
-        end
       end
 
       def announcement_params

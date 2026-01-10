@@ -16,9 +16,15 @@ gem "kaminari", "~> 1.2"
 gem "bcrypt", "~> 3.1"
 gem "image_processing", "~> 1.12"
 
+# Security
+gem "jwt", "~> 2.8"
+gem "pundit", "~> 2.3"
+gem "rack-attack", "~> 6.7"
+
 group :development, :test do
   gem "debug"
   gem "rspec-rails", "~> 6.1"
   gem "factory_bot_rails", "~> 6.4"
   gem "faker", "~> 3.2"
+  gem "dotenv-rails", "~> 3.1"
 end
