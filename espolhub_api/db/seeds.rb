@@ -1,40 +1,135 @@
-# This file creates seed data for testing
+# frozen_string_literal: true
 
-# Create categories
-categories_data = ['Electronics', 'Books', 'Clothing', 'Furniture', 'Services']
-categories = categories_data.map do |name|
-  Category.find_or_create_by!(name: name) do |cat|
-    cat.description = "#{name} category"
-    cat.active = true
+# db/seeds.rb
+# Main seed orchestrator for ESPOL Hub API
+#
+# This file coordinates the seeding process based on the Rails environment.
+# It loads environment-specific seed files in the correct order.
+#
+# Usage:
+#   rails db:seed                    # Seed based on current environment
+#   RAILS_ENV=production rails db:seed  # Seed production (categories only)
+#   rails db:reset                   # Drop, create, migrate, and seed
+#
+# Structure:
+#   db/seeds/
+#   ├── shared/
+#   │   └── categories_data.rb      # Shared category definitions
+#   ├── development/
+#   │   ├── 01_sellers.rb           # Test users
+#   │   ├── 02_categories.rb        # Categories with examples
+#   │   └── 03_announcements.rb     # Rich sample data
+#   └── production/
+#       └── categories.rb           # Production-safe categories only
+
+puts ''
+puts '=' * 60
+puts '🌱 ESPOL Hub Database Seeding'
+puts '=' * 60
+puts "Environment: #{Rails.env.upcase}"
+puts "Time: #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}"
+puts '=' * 60
+
+# Safety confirmation for production
+if Rails.env.production?
+  puts ''
+  puts '⚠️  WARNING: You are about to seed the PRODUCTION database!'
+  puts '   This will add/update categories but NOT delete existing data.'
+  puts ''
+
+  # Only prompt if running interactively
+  if $stdin.tty?
+    print 'Type "yes" to continue: '
+    response = $stdin.gets&.chomp
+    unless response&.downcase == 'yes'
+      puts '❌ Seeding cancelled.'
+      exit 1
+    end
+  else
+    puts '   Running in non-interactive mode, proceeding...'
   end
 end
-puts "Created #{Category.count} categories"
 
-# Create a test seller
-seller = Seller.find_or_create_by!(email: 'test@espol.edu.ec') do |s|
-  s.name = 'Test User'
-  s.phone = '0991234567'
-  s.faculty = 'FIEC'
-  s.password = 'Password123'
-  s.password_confirmation = 'Password123'
-end
-puts "Created seller: #{seller.email}"
+# Load shared data module
+puts "\n📚 Loading shared data modules..."
+require_relative 'seeds/shared/categories_data'
+puts '   ✅ SeedData module loaded'
 
-# Create some announcements if none exist
-if Announcement.count == 0
-  3.times do |i|
-    Announcement.create!(
-      title: "Test Announcement #{i+1} - Great Product",
-      description: "This is a test description for announcement #{i+1}. It has great value and quality.",
-      price: (i+1) * 100,
-      condition: [:new_item, :like_new, :good][i],
-      status: :active,
-      seller: seller,
-      category: categories[i % categories.length],
-      location: 'ESPOL Campus'
-    )
+# Track timing
+start_time = Time.current
+
+begin
+  case Rails.env
+  when 'development', 'test'
+    puts "\n📦 Loading DEVELOPMENT seeds..."
+    puts '   This includes test users, categories, and sample announcements.'
+    puts ''
+
+    # Load seed files in order (sorted by filename)
+    seed_files = Dir[Rails.root.join('db/seeds/development/*.rb')].sort
+
+    seed_files.each do |file|
+      filename = File.basename(file)
+      puts "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      puts "📄 Loading: #{filename}"
+      puts '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      load file
+    end
+
+  when 'production'
+    puts "\n🏭 Loading PRODUCTION seeds..."
+    puts '   Only categories will be seeded (safe operation).'
+    puts ''
+
+    seed_file = Rails.root.join('db/seeds/production/categories.rb')
+    if File.exist?(seed_file)
+      load seed_file
+    else
+      puts '❌ Production seed file not found!'
+      exit 1
+    end
+
+  else
+    puts "❌ Unknown environment: #{Rails.env}"
+    puts '   Supported environments: development, test, production'
+    exit 1
   end
-  puts "Created #{Announcement.count} announcements"
-else
-  puts "Announcements already exist: #{Announcement.count}"
+
+rescue StandardError => e
+  puts ''
+  puts '=' * 60
+  puts '❌ SEEDING FAILED'
+  puts '=' * 60
+  puts "Error: #{e.message}"
+  puts "Location: #{e.backtrace.first}"
+  puts ''
+  raise e
 end
+
+# Calculate elapsed time
+elapsed_time = Time.current - start_time
+
+# Final summary
+puts ''
+puts '=' * 60
+puts '✅ SEEDING COMPLETED SUCCESSFULLY'
+puts '=' * 60
+puts ''
+puts '📊 Final Database State:'
+puts "   • Categories:     #{Category.count}"
+puts "   • Sellers:        #{Seller.count}"
+puts "   • Announcements:  #{Announcement.count}"
+puts "   • Refresh Tokens: #{RefreshToken.count}"
+puts ''
+puts "⏱️  Total time: #{elapsed_time.round(2)} seconds"
+puts ''
+
+if Rails.env.development?
+  puts '🔐 Test Credentials:'
+  puts '   Email:    admin@espol.edu.ec'
+  puts '   Password: Password123'
+  puts ''
+end
+
+puts '=' * 60
+puts ''
