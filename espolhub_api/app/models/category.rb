@@ -4,8 +4,8 @@ class Category < ApplicationRecord
 
   # === Validations ===
   validates :name, presence: true,
-                   uniqueness: { case_sensitive: false },
-                   length: { minimum: 2, maximum: 50 }
+    uniqueness: {case_sensitive: false},
+    length: {minimum: 2, maximum: 50}
 
   # === Callbacks ===
   before_save :normalize_name
@@ -15,9 +15,9 @@ class Category < ApplicationRecord
   scope :alphabetical, -> { order(:name) }
   scope :with_announcements_count, -> {
     left_joins(:announcements)
-      .where(announcements: { status: 0 }) # 0 = active enum value
+      .where(announcements: {status: 0}) # 0 = active enum value
       .group(:id)
-      .select('categories.*, COUNT(announcements.id) as active_announcements_count')
+      .select("categories.*, COUNT(announcements.id) as active_announcements_count")
   }
 
   # === Instance Methods ===

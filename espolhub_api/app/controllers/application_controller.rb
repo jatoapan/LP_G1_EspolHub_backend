@@ -8,6 +8,10 @@ class ApplicationController < ActionController::API
 
   protected
 
+  def pundit_user
+    current_seller
+  end
+
   # Authenticate the current seller using JWT token
   # Expects Authorization header with Bearer token
   def authenticate_seller!
@@ -28,7 +32,6 @@ class ApplicationController < ActionController::API
       # Find and cache the seller
       seller_id = Auth::TokenService.seller_id_from_payload(payload)
       @current_seller = Seller.find(seller_id)
-
     rescue Auth::TokenService::ExpiredTokenError
       render_error("Token expirado, por favor inicia sesión nuevamente", status: :unauthorized)
     rescue Auth::TokenService::InvalidTokenError
@@ -41,9 +44,7 @@ class ApplicationController < ActionController::API
   # Get the current authenticated seller
   #
   # @return [Seller, nil]
-  def current_seller
-    @current_seller
-  end
+  attr_reader :current_seller
 
   # Render successful response with data
   #
@@ -51,7 +52,7 @@ class ApplicationController < ActionController::API
   # @param status [Symbol] HTTP status code
   # @param meta [Hash] Optional metadata
   def render_success(data, status: :ok, meta: nil)
-    response = { data: data }
+    response = {data: data}
     response[:meta] = meta if meta.present?
     render json: response, status: status
   end
@@ -61,12 +62,12 @@ class ApplicationController < ActionController::API
   # @param errors [String, Array] Error message(s)
   # @param status [Symbol] HTTP status code
   def render_error(errors, status: :unprocessable_entity)
-    render json: { errors: Array(errors) }, status: status
+    render json: {errors: Array(errors)}, status: status
   end
 
   # Render unauthorized response (deprecated - use render_error)
   def render_unauthorized
-    render json: { error: "No autorizado" }, status: :unauthorized
+    render json: {error: "No autorizado"}, status: :unauthorized
   end
 
   private
@@ -75,24 +76,25 @@ class ApplicationController < ActionController::API
   #
   # @return [String, nil]
   def extract_bearer_token
-    header = request.headers['Authorization']
-    return nil unless header&.start_with?('Bearer ')
+    header = request.headers["Authorization"]
+    return nil unless header&.start_with?("Bearer ")
 
-    header.split(' ').last
+    header.split(" ").last
   end
 
   # Handle 404 Not Found errors
   def not_found
-    render json: { error: "Recurso no encontrado" }, status: :not_found
+    render json: {error: "Recurso no encontrado"}, status: :not_found
   end
 
   # Handle 400 Bad Request errors
   def bad_request(exception)
-    render json: { error: exception.message }, status: :bad_request
+    render json: {error: exception.message}, status: :bad_request
   end
 
   # Handle Pundit authorization errors
   def user_not_authorized
-    render json: { error: "No tienes permiso para realizar esta acción" }, status: :forbidden
+    render json: {error: "No tienes permiso para realizar esta acción"}, status: :forbidden
   end
 end
+
