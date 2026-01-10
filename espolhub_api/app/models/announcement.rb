@@ -11,7 +11,7 @@ class Announcement < ApplicationRecord
 
   # Validations
   validates :title, presence: true, length: { minimum: 5, maximum: 150 }
-  validates :description, length: { maximum: 2000 }
+  validates :description, presence: true, length: { maximum: 2000 }
   validates :price, presence: true,
                     numericality: { greater_than: 0, less_than_or_equal_to: 100_000 }
   validates :condition, presence: true

@@ -15,9 +15,8 @@ class Category < ApplicationRecord
   scope :alphabetical, -> { order(:name) }
   scope :with_announcements_count, -> {
     left_joins(:announcements)
-      .where(announcements: {status: 0}) # 0 = active enum value
       .group(:id)
-      .select("categories.*, COUNT(announcements.id) as active_announcements_count")
+      .select("categories.*, COUNT(CASE WHEN announcements.status = 0 THEN 1 END) as active_announcements_count")
   }
 
   # === Instance Methods ===

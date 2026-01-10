@@ -74,6 +74,27 @@ class AnnouncementPolicy < ApplicationPolicy
     owner?
   end
 
+  # Anyone can search announcements (public action)
+  #
+  # @return [Boolean]
+  def search?
+    true
+  end
+
+  # Anyone can view popular announcements (public action)
+  #
+  # @return [Boolean]
+  def popular?
+    true
+  end
+
+  # Anyone can view recent announcements (public action)
+  #
+  # @return [Boolean]
+  def recent?
+    true
+  end
+
   private
 
   # Check if the current user owns this announcement

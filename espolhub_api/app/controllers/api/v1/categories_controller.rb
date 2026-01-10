@@ -22,12 +22,15 @@ module Api
           .active_listings
           .includes(:seller, images_attachments: :blob)
           .recent
-          .paginate(page: params[:page], per_page: params[:per_page])
+          .page(params[:page]).per(params[:per_page] || 12)
 
         render_success(
           AnnouncementSerializer.new(announcements).serializable_hash[:data],
           meta: {
-            total_count: category.announcements.active_listings.count,
+            current_page: announcements.current_page,
+            per_page: announcements.limit_value,
+            total_count: announcements.total_count,
+            total_pages: announcements.total_pages,
             category: category.name
           }
         )

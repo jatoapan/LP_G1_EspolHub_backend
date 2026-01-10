@@ -29,3 +29,14 @@
 
 en:
   hello: "Hello world"
+  announcements:
+    conditions:
+      new_item: "New"
+      like_new: "Like New"
+      good: "Good"
+      acceptable: "Acceptable"
+    statuses:
+      active: "Active"
+      sold: "Sold"
+      reserved: "Reserved"
+      inactive: "Inactive"

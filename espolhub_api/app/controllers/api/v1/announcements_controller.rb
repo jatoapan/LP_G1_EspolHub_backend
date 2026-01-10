@@ -1,9 +1,9 @@
 module Api
   module V1
     class AnnouncementsController < BaseController
-      before_action :authenticate_seller!, only: [:create, :update, :destroy]
-      before_action :set_announcement, only: [:show, :update, :destroy]
-      after_action :verify_authorized, except: [:index, :show]
+      before_action :authenticate_seller!, only: [:create, :update, :destroy, :reserve, :mark_as_sold]
+      before_action :set_announcement, only: [:show, :update, :destroy, :increment_views, :reserve, :mark_as_sold]
+      after_action :verify_authorized, except: [:index, :show, :search, :popular, :recent, :increment_views]
 
       # GET /api/v1/announcements
       def index
@@ -85,7 +85,87 @@ module Api
         end
       end
 
+      # PATCH /api/v1/announcements/:id/increment_views
+      def increment_views
+        authorize @announcement
+        @announcement.increment_views!
+        head :no_content
+      end
+
+      # PATCH /api/v1/announcements/:id/reserve
+      def reserve
+        authorize @announcement
+
+        if @announcement.update(status: :reserved)
+          render_success(AnnouncementSerializer.new(@announcement).serializable_hash[:data])
+        else
+          render_error(@announcement.errors.full_messages)
+        end
+      end
+
+      # PATCH /api/v1/announcements/:id/mark_as_sold
+      def mark_as_sold
+        authorize @announcement
+
+        if @announcement.update(status: :sold)
+          render_success(AnnouncementSerializer.new(@announcement).serializable_hash[:data])
+        else
+          render_error(@announcement.errors.full_messages)
+        end
+      end
+
+      # GET /api/v1/announcements/search
+      def search
+        authorize Announcement
+        announcements = Announcement.active_listings
+          .includes(:seller, :category, images_attachments: :blob)
+          .search(params[:q])
+          .page(params[:page]).per(params[:per_page] || 12)
+
+        render_success(
+          AnnouncementSerializer.new(announcements).serializable_hash[:data],
+          meta: pagination_meta(announcements)
+        )
+      end
+
+      # GET /api/v1/announcements/popular
+      def popular
+        authorize Announcement
+        announcements = Announcement.active_listings
+          .includes(:seller, :category, images_attachments: :blob)
+          .popular
+          .page(params[:page]).per(params[:per_page] || 12)
+
+        render_success(
+          AnnouncementSerializer.new(announcements).serializable_hash[:data],
+          meta: pagination_meta(announcements)
+        )
+      end
+
+      # GET /api/v1/announcements/recent
+      def recent
+        authorize Announcement
+        announcements = Announcement.active_listings
+          .includes(:seller, :category, images_attachments: :blob)
+          .recent
+          .page(params[:page]).per(params[:per_page] || 12)
+
+        render_success(
+          AnnouncementSerializer.new(announcements).serializable_hash[:data],
+          meta: pagination_meta(announcements)
+        )
+      end
+
       private
+
+      def pagination_meta(collection)
+        {
+          current_page: collection.current_page,
+          per_page: collection.limit_value,
+          total_count: collection.total_count,
+          total_pages: collection.total_pages
+        }
+      end
 
       def set_announcement
         @announcement = Announcement.includes(:seller, :category, images_attachments: :blob)
@@ -99,7 +179,8 @@ module Api
           :price,
           :condition,
           :status,
-          :category_id
+          :category_id,
+          :location
         )
       end
 

@@ -45,7 +45,7 @@ Rails.application.routes.draw do
 
       resources :sellers, only: [:create, :show] do
         # GET /api/v1/sellers/:seller_id/announcements
-        resources :announcements, only: [:index], action: :announcements
+        get :announcements, on: :member
       end
     end
   end
